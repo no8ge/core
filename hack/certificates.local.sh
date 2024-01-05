@@ -4,7 +4,12 @@ SERVICE_NAME=core
 NAMESPACE=default
 
 
-# inster 192.168.167.6 core.default.svc to k3d-localcluster-serverlb.orb.local:/etc/hosts
+# IP=$(ifconfig en0 | grep inet | grep -v inet6 | awk '{print $2}')
+# echo IP:$IP
+
+# docker exec -it k3d-dev-serverlb sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
+# docker exec -it k3d-dev-agent-0 sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
+# docker exec -it k3d-dev-server-0 sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
 
 # openssl genrsa -out ./certificates/$SERVICE_NAME.key 2048
 # openssl req -new -nodes -x509 -days 365 -key ./certificates/$SERVICE_NAME.key -out ./certificates/$SERVICE_NAME.pem -subj "/CN=${SERVICE_NAME}.${NAMESPACE}.svc" -addext "subjectAltName = DNS:${SERVICE_NAME}.${NAMESPACE}.svc"

@@ -42,10 +42,10 @@ webhooks:
         scope: "*"
     objectSelector:
       matchExpressions:
-        - key: atop.io/enabled
+        - key: atop.io/sidecar
           operator: In
           values:
-            - "true"
+            - enable
     sideEffects: None
     timeoutSeconds: 30
 
@@ -73,10 +73,10 @@ webhooks:
     namespaceSelector: {}
     objectSelector:
       matchExpressions:
-        - key: atop.io/enabled
+        - key: atop.io/sidecar
           operator: In
           values:
-            - "true"
+            - enable
     reinvocationPolicy: Never
     rules:
       - apiGroups:
