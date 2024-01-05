@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  # labels:
+    # atop.io/sidecar: enable
+    # atop.io/sidecar: disable
+spec:
+  containers:
+    - name: my-container
+      image: busybox:1.31.1
+      args:
+        - /bin/sh
+        - -c
+        - sleep 10000
+        # - for i in {1..2000}; do dd if=/dev/zero of=200M.file bs=500 count=1; done
