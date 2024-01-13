@@ -4,11 +4,11 @@ kind: Pod
 metadata:
   name: pytest
   labels:
-    atop.io/sidecar: enable
+    atop.io/enable: "true"
+    app: pytest
   annotations:
     atop.io/report-path: /demo/report
     atop.io/protocol: s3
-
 spec:
   containers:
     - name: pytest
@@ -16,4 +16,9 @@ spec:
       args:
         - /bin/sh
         - -c
-        - pytest --html=report/report.html -s -v; sleep 10000
+        - pytest --html=report/report.html -s -v;sleep 5000
+      ports:
+        - containerPort: 8002
+      env:
+        - name: HOST
+          value: "demo.default.svc:8002"

@@ -3,16 +3,8 @@
 SERVICE_NAME=core
 NAMESPACE=default
 
-
-# IP=$(ifconfig en0 | grep inet | grep -v inet6 | awk '{print $2}')
-# echo IP:$IP
-
-# docker exec -it k3d-dev-serverlb sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
-# docker exec -it k3d-dev-agent-0 sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
-# docker exec -it k3d-dev-server-0 sh -c "echo '${ip} ${SERVICE_NAME}.${NAMESPACE}.svc' >> /etc/hosts"
-
 # openssl genrsa -out ./certificates/$SERVICE_NAME.key 2048
-# openssl req -new -nodes -x509 -days 365 -key ./certificates/$SERVICE_NAME.key -out ./certificates/$SERVICE_NAME.pem -subj "/CN=${SERVICE_NAME}.${NAMESPACE}.svc" -addext "subjectAltName = DNS:${SERVICE_NAME}.${NAMESPACE}.svc"
+# openssl req -new -nodes -x509 -days 365 -key ./certificates/$SERVICE_NAME.key -out ./certificates/$SERVICE_NAME.pem -subj "/CN=host.docker.internal" -addext "subjectAltName = DNS:host.docker.internal"
 
 CA_BUNDLE=$(cat ./certificates/$SERVICE_NAME.pem | base64 | tr -d "\n")
 echo CA_BUNDLE:$CA_BUNDLE
@@ -28,10 +20,11 @@ webhooks:
       - v1
     clientConfig:
       caBundle: ${CA_BUNDLE}
-      url: https://${SERVICE_NAME}.${NAMESPACE}.svc:8080/v1/validate
+      url: https://host.docker.internal:8080/v1/validate
     failurePolicy: Fail
     matchPolicy: Exact
     name: core.atop.io
+    namespaceSelector: {}
     rules:
       - apiGroups:
           - ""
@@ -46,10 +39,10 @@ webhooks:
         scope: "*"
     objectSelector:
       matchExpressions:
-        - key: atop.io/sidecar
+        - key: atop.io/enable
           operator: In
           values:
-            - enable
+            - "true"
     sideEffects: None
     timeoutSeconds: 30
 
@@ -66,17 +59,17 @@ webhooks:
       - v1
     clientConfig:
       caBundle: ${CA_BUNDLE}
-      url: https://${SERVICE_NAME}.${NAMESPACE}.svc:8080/v1/inject
+      url: https://host.docker.internal:8080/v1/inject
     failurePolicy: Ignore
     matchPolicy: Exact
     name: core.atop.io
     namespaceSelector: {}
     objectSelector:
       matchExpressions:
-        - key: atop.io/sidecar
+        - key: atop.io/enable
           operator: In
           values:
-            - enable
+            - "true"
     reinvocationPolicy: Never
     rules:
       - apiGroups:
