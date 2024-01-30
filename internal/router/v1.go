@@ -1,20 +1,14 @@
-package api
+package router
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
-	"github.com/no8ge/core/pkg/handler"
+	"github.com/no8ge/core/internal/handler"
 )
 
 func V1(r *gin.Engine) {
 
 	core := r.Group("/v1")
 	{
-		core.GET("/", func(c *gin.Context) {
-			log.Println("Hello, Geektutu")
-			c.String(200, "Hello, Geektutu")
-		})
 		core.GET("/info", handler.Info)
 	}
 
