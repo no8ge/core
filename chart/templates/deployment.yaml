@@ -34,6 +34,23 @@ spec:
       labels:
         app: "{{ .Release.Name }}"
     spec:
+      initContainers:
+        - name: init
+          image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
+          imagePullPolicy: Always
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - "./core init"
+          env:  
+            - name: NAMESPACE
+              value: "{{ .Release.Namespace }}"
+            - name: SERVICE_NAME
+              value: "{{ .Release.Name }}"             
+          volumeMounts:
+            - name: certs
+              mountPath: /core/cert
       containers:
         - name: "{{ .Release.Name }}"
           image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
@@ -41,17 +58,18 @@ spec:
             - "sh"
           args:
             - "-c"
-            - "./core"
+            - "./core server"
           ports:
             - containerPort: 8080
           imagePullPolicy: Always
           env:
             - name: NAMESPACE
               value: "{{ .Release.Namespace }}"
+            - name: SERVICE_NAME
+              value: "{{ .Release.Name }}"              
           volumeMounts:
-            - name: config-volume
-              mountPath: /core/certificates
+            - name: certs
+              mountPath: /core/cert
       volumes:
-        - name: config-volume
-          configMap:
-            name: core-config
+        - name: certs
+          emptyDir: {}
