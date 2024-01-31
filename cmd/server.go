@@ -24,8 +24,8 @@ func server(port string, mod string) {
 	}
 	r := gin.Default()
 	router.V1(r)
-	if err := r.RunTLS(fmt.Sprintf(":%s", port), "./cert/core.pem", "./cert/core.key"); err != nil {
-		log.Fatalf("execute core service failed, %s", err.Error())
+	if err := r.RunTLS(fmt.Sprintf(":%s", port), certFile, keyFile); err != nil {
+		log.Fatalf("failed execute core service, %s", err.Error())
 		os.Exit(1)
 	}
 }

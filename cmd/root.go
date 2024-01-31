@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"strconv"
@@ -23,12 +24,10 @@ import (
 )
 
 const (
-	hookServiceName = "core.atop.io"
-	serviceName     = "core"
-	namespace       = "default"
-	days            = 365
-	certFile        = "./cert/" + serviceName + ".pem"
-	keyFile         = "./cert/" + serviceName + ".key"
+	days     = 365
+	certFile = "./cert/core.pem"
+	keyFile  = "./cert/core.key"
+	hookName = "core.atop.io"
 )
 
 var (
@@ -48,7 +47,7 @@ func init() {
 	rootCmd.AddCommand(InitCmd)
 	rootCmd.PersistentFlags().StringP("mod", "m", "release", "service mod for core service")
 	rootCmd.PersistentFlags().StringP("port", "p", "8080", "server port for core service")
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./core.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is config.yaml)")
 	rootCmd.PersistentFlags().Bool("viper", true, "use Viper for configuration")
 	viper.BindPFlag("useViper", rootCmd.PersistentFlags().Lookup("viper"))
 }
@@ -57,18 +56,17 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		home, err := os.UserHomeDir()
+		wd, err := os.Getwd()
 		cobra.CheckErr(err)
 
-		viper.AddConfigPath(home)
+		viper.AddConfigPath(wd)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".core")
+		viper.SetConfigName("config")
 	}
 
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("failed using config file: ", err)
 	}
 }
 
@@ -113,11 +111,11 @@ func generateSelfSignedCert(webhookURL string) error {
 	if err != nil {
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
-
+	log.Printf("successed to generate self signed cert")
 	return nil
 }
 
-func createValidatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.WebhookClientConfig) error {
+func createValidatingWebhookConfig(name string, kubeClient kubernetes.Interface, wcc v1.WebhookClientConfig) error {
 	var (
 		scope       = v1.AllScopes
 		sideEffects = v1.SideEffectClassNone
@@ -125,10 +123,10 @@ func createValidatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.Webho
 
 	validatingWebhook := &v1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: serviceName,
+			Name: name,
 		},
 		Webhooks: []v1.ValidatingWebhook{{
-			Name:         hookServiceName,
+			Name:         hookName,
 			ClientConfig: wcc,
 			Rules: []v1.RuleWithOperations{{
 				Operations: []v1.OperationType{
@@ -159,25 +157,27 @@ func createValidatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.Webho
 
 	_, err := kubeClient.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(context.TODO(), validatingWebhook.Name, metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
-		// return nil
+		log.Printf("failed to get ValidatingWebhookConfiguration: %v", err)
 	} else if err == nil {
 		err := kubeClient.AdmissionregistrationV1().ValidatingWebhookConfigurations().Delete(context.TODO(), validatingWebhook.Name, metav1.DeleteOptions{})
 		if err != nil {
-			fmt.Printf("failed to delete MutatingWebhookConfiguration: %v", err)
+			log.Printf("failed to delete ValidatingWebhookConfiguration: %v", err)
+			return nil
 		}
+		log.Printf("successed to delete old ValidatingWebhookConfiguration")
 	} else {
-		fmt.Printf("failed to get ValidatingWebhookConfiguration: %v", err)
+		log.Printf("failed to get ValidatingWebhookConfiguration: %v", err)
 	}
 	_, createErr := kubeClient.AdmissionregistrationV1().ValidatingWebhookConfigurations().Create(context.TODO(), validatingWebhook, metav1.CreateOptions{})
 	if createErr != nil {
-		fmt.Printf("failed to create ValidatingWebhookConfiguration: %v", createErr)
+		log.Printf("failed to create ValidatingWebhookConfiguration: %v", createErr)
 		return nil
 	}
+	log.Printf("successed to create ValidatingWebhookConfiguration")
 	return nil
 }
 
-func createMutatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.WebhookClientConfig) error {
-
+func createMutatingWebhookConfig(name string, kubeClient kubernetes.Interface, wcc v1.WebhookClientConfig) error {
 	var (
 		scope              = v1.AllScopes
 		sideEffects        = v1.SideEffectClassNone
@@ -186,10 +186,10 @@ func createMutatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.Webhook
 
 	mutatingWebhook := &v1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: serviceName,
+			Name: name,
 		},
 		Webhooks: []v1.MutatingWebhook{{
-			Name:         hookServiceName,
+			Name:         hookName,
 			ClientConfig: wcc,
 			Rules: []v1.RuleWithOperations{{
 				Operations: []v1.OperationType{
@@ -219,20 +219,23 @@ func createMutatingWebhookConfig(kubeClient kubernetes.Interface, wcc v1.Webhook
 
 	_, err := kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Get(context.TODO(), mutatingWebhook.Name, metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
-		// return nil
+		log.Printf("failed to get MutatingWebhookConfiguration: %v", err)
 	} else if err == nil {
 		err := kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Delete(context.TODO(), mutatingWebhook.Name, metav1.DeleteOptions{})
 		if err != nil {
-			fmt.Printf("failed to delete MutatingWebhookConfiguration: %v", err)
+			log.Printf("failed to delete MutatingWebhookConfiguration: %v", err)
+			return nil
 		}
+		log.Printf("successed to delete old MutatingWebhookConfiguration")
 	} else {
-		fmt.Printf("failed to get MutatingWebhookConfiguration: %v", err)
+		log.Printf("failed to get MutatingWebhookConfiguration: %v", err)
 	}
 	_, createErr := kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Create(context.TODO(), mutatingWebhook, metav1.CreateOptions{})
 	if createErr != nil {
-		fmt.Printf("failed to create MutatingWebhookConfiguration: %v", createErr)
+		log.Printf("failed to create MutatingWebhookConfiguration: %v", createErr)
 		return nil
 	}
+	log.Printf("successed to create MutatingWebhookConfiguration")
 	return nil
 }
 
@@ -242,7 +245,11 @@ var InitCmd = &cobra.Command{
 	Long:  `Init core to k8s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		mod, _ := cmd.Flags().GetString("mod")
+		log.Printf("successed to get mod: %v", mod)
+
 		port, _ := cmd.Flags().GetString("port")
+		namespace := viper.GetString("namespace")
+		serviceName := viper.GetString("service_name")
 
 		intPort, err := strconv.Atoi(port)
 		int32Value := int32(intPort)
@@ -285,14 +292,13 @@ var InitCmd = &cobra.Command{
 			}
 		}
 		generateSelfSignedCert(webhookHost)
-		certFilePath := "./cert/" + serviceName + ".pem"
-		pemData, err := os.ReadFile(certFilePath)
+		pemData, err := os.ReadFile(certFile)
 		if err != nil {
 			panic(err)
 		}
 		vc.CABundle = pemData
 		mc.CABundle = pemData
-		createValidatingWebhookConfig(client, vc)
-		createMutatingWebhookConfig(client, mc)
+		createValidatingWebhookConfig(serviceName, client, vc)
+		createMutatingWebhookConfig(serviceName, client, mc)
 	},
 }
