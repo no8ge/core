@@ -9,7 +9,7 @@ build: deps
 	go build -v -o $(CHART_NAME)
 
 clean:
-	rm -f $(CHART_NAME)
+	rm -f $(CHART_NAME)*
 
 run: build
 	@if [ ! -x ./$(CHART_NAME) ]; then echo "Binary not found or not executable"; exit 1; fi
