@@ -42,15 +42,13 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - "./core init"
-          env:  
-            - name: NAMESPACE
-              value: "{{ .Release.Namespace }}"
-            - name: SERVICE_NAME
-              value: "{{ .Release.Name }}"             
+            - "./core init"           
           volumeMounts:
             - name: certs
               mountPath: /core/cert
+            - name: config
+              mountPath: /core/config.yaml
+              subPath: config.yaml              
       containers:
         - name: "{{ .Release.Name }}"
           image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
@@ -61,15 +59,16 @@ spec:
             - "./core server"
           ports:
             - containerPort: 8080
-          imagePullPolicy: Always
-          env:
-            - name: NAMESPACE
-              value: "{{ .Release.Namespace }}"
-            - name: SERVICE_NAME
-              value: "{{ .Release.Name }}"              
+          imagePullPolicy: Always      
           volumeMounts:
             - name: certs
               mountPath: /core/cert
+            - name: config
+              mountPath: /core/config.yaml
+              subPath: config.yaml
       volumes:
         - name: certs
           emptyDir: {}
+        - name: config
+          configMap:  
+            name: "{{ .Release.Name }}"
