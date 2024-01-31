@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wI2L/jsondiff"
+
+	hook "github.com/no8ge/core/internal/service"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,87 +15,41 @@ import (
 
 func Inject(c *gin.Context) {
 
-	req := admissionv1.AdmissionReview{}
-	resp := admissionv1.AdmissionReview{
-		TypeMeta: req.TypeMeta,
-	}
-	c.BindJSON(&req)
+	var (
+		oldPod          = corev1.Pod{}
+		admissionReview = admissionv1.AdmissionReview{}
+		patchType       = admissionv1.PatchTypeJSONPatch
+	)
 
-	pod := corev1.Pod{}
-	sidecarContainer := corev1.Container{}
-	json.Unmarshal(req.Request.Object.Raw, &pod)
+	c.BindJSON(&admissionReview)
+	json.Unmarshal(admissionReview.Request.Object.Raw, &oldPod)
 
-	reportPath := pod.ObjectMeta.Annotations["atop.io/report-path"]
+	protocol := oldPod.ObjectMeta.Annotations["atop.io/protocol"]
+	reportPath := oldPod.ObjectMeta.Annotations["atop.io/report-path"]
 
-	newPod := pod.DeepCopy()
-	workerContainer := newPod.Spec.Containers[0]
-	workerContainer.VolumeMounts = append(workerContainer.VolumeMounts, corev1.VolumeMount{
-		Name:      "cache-volume",
-		MountPath: reportPath,
-	})
-	newPod.Spec.Containers[0] = workerContainer
-	protocol := pod.ObjectMeta.Annotations["atop.io/protocol"]
+	newPod := oldPod.DeepCopy()
 	if protocol == "s3" {
-		sidecarContainer.Name = "sidecar"
-		sidecarContainer.Image = "no8ge/sidecar:1.0.0"
-		sidecarContainer.ImagePullPolicy = "Always"
-		sidecarContainer.Command = append(sidecarContainer.Command, "/bin/sh")
-		sidecarContainer.Args = append(sidecarContainer.Args, "-c")
-		sidecarContainer.Args = append(sidecarContainer.Args, "mc alias set atop http://$MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY; mc mirror --remove --watch --overwrite /data atop/result/$REPORT")
-		sidecarContainer.Env = append(sidecarContainer.Env, corev1.EnvVar{
-			Name: "REPORT",
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					FieldPath: "metadata.name",
-				},
-			},
-		})
-		sidecarContainer.Env = append(sidecarContainer.Env, corev1.EnvVar{
-			Name:  "MINIO_ACCESS_KEY",
-			Value: "admin",
-		})
-		sidecarContainer.Env = append(sidecarContainer.Env, corev1.EnvVar{
-			Name:  "MINIO_SECRET_KEY",
-			Value: "changeme",
-		})
-		sidecarContainer.Env = append(sidecarContainer.Env, corev1.EnvVar{
-			Name:  "MINIO_HOST",
-			Value: "files-minio.default:9000",
-		})
-		sidecarContainer.VolumeMounts = append(sidecarContainer.VolumeMounts, corev1.VolumeMount{
-			Name:      "cache-volume",
-			MountPath: "/data",
-		})
+		sidecar, _ := hook.CreateSidecar(hook.SidecarTypeAtop)
+		workerContainer := newPod.Spec.Containers[0]
+		workerContainer.VolumeMounts = append(workerContainer.VolumeMounts,
+			hook.CreateVolumeMount(sidecar.EmptyDir.Name, reportPath))
+		newPod.Spec.Volumes = append(newPod.Spec.Volumes, sidecar.EmptyDir)
+		newPod.Spec.Containers = []corev1.Container{sidecar.Container, workerContainer}
 	}
 
-	newPod.Spec.Volumes = append(newPod.Spec.Volumes, corev1.Volume{
-		Name: "cache-volume",
-		VolumeSource: corev1.VolumeSource{
-			EmptyDir: &corev1.EmptyDirVolumeSource{},
-		},
-	})
-	newPod.Spec.Containers = append(newPod.Spec.Containers, sidecarContainer)
-
-	diff, err := jsondiff.Compare(pod, newPod)
+	patch, err := hook.DiffPodPatch(oldPod, oldPod)
 	if err != nil {
-		return
+		log.Printf("failed to DiffPodPatch: %v", err)
 	}
 
-	patch, err := json.MarshalIndent(diff, "", "    ")
-	if err != nil {
-		return
-	}
-
-	patchType := admissionv1.PatchTypeJSONPatch
-	resp.Response = &admissionv1.AdmissionResponse{
-		UID:       req.Request.UID,
+	admissionReview.Response = &admissionv1.AdmissionResponse{
+		UID:       admissionReview.Request.UID,
 		Allowed:   true,
 		Result:    &metav1.Status{Status: "Success", Message: "atop.io/sidecar is enable"},
 		Patch:     patch,
 		PatchType: &patchType,
 	}
-
-	c.JSON(200, resp)
+	c.JSON(200, admissionReview)
 
 }
 
