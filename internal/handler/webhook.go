@@ -37,7 +37,7 @@ func Inject(c *gin.Context) {
 		newPod.Spec.Containers = []corev1.Container{sidecar.Container, workerContainer}
 	}
 
-	patch, err := hook.DiffPodPatch(oldPod, oldPod)
+	patch, err := hook.DiffPodPatch(oldPod, *newPod)
 	if err != nil {
 		log.Printf("failed to DiffPodPatch: %v", err)
 	}
