@@ -67,7 +67,7 @@ func CreateSidecar(t SidecarType) (*Sidecar, error) {
 		}
 		c.Image = "no8ge/sidecar:1.0.0"
 		c.Command = []string{"/bin/sh"}
-		c.Args = []string{"-c", "sleep 3600"}
+		c.Args = []string{"-c", "mc alias set atop http://$MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY;mc mirror --remove --watch --overwrite /data atop/result/$HOSTNAME"}
 		c.Ports = []corev1.ContainerPort{port}
 		c.EnvFrom = []corev1.EnvFromSource{envfromMinio}
 		c.VolumeMounts = []corev1.VolumeMount{cacheVolumeMount}
