@@ -22,7 +22,7 @@ type Sidecar struct {
 	PersistentVolume corev1.Volume
 }
 
-func CreateSidecar(t SidecarType) (*Sidecar, error) {
+func CreateSidecar(t SidecarType, namespace string) (*Sidecar, error) {
 	restartPolicy := corev1.ContainerRestartPolicyAlways
 	envfromMinio := corev1.EnvFromSource{
 		ConfigMapRef: &corev1.ConfigMapEnvSource{
@@ -37,8 +37,9 @@ func CreateSidecar(t SidecarType) (*Sidecar, error) {
 	}
 
 	c := corev1.Container{
-		Name:          "sidecar",
-		RestartPolicy: &restartPolicy,
+		Name:            "sidecar",
+		RestartPolicy:   &restartPolicy,
+		ImagePullPolicy: corev1.PullIfNotPresent,
 	}
 
 	var (
@@ -65,9 +66,9 @@ func CreateSidecar(t SidecarType) (*Sidecar, error) {
 		port = corev1.ContainerPort{
 			ContainerPort: 5045,
 		}
-		c.Image = "no8ge/sidecar:1.0.0"
+		c.Image = "no8ge/sidecar:20240218175456-f1530be"
 		c.Command = []string{"/bin/sh"}
-		c.Args = []string{"-c", "mc alias set atop http://$MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY;mc mirror --remove --watch --overwrite /data atop/result/$HOSTNAME"}
+		c.Args = []string{"-c", "./sidecar watch -d /data -p $HOSTNAME -e $MINIO_HOST" + " -n " + namespace}
 		c.Ports = []corev1.ContainerPort{port}
 		c.EnvFrom = []corev1.EnvFromSource{envfromMinio}
 		c.VolumeMounts = []corev1.VolumeMount{cacheVolumeMount}
