@@ -29,7 +29,7 @@ func Inject(c *gin.Context) {
 
 	newPod := oldPod.DeepCopy()
 	if protocol == "s3" {
-		sidecar, _ := hook.CreateSidecar(hook.SidecarTypeAtop)
+		sidecar, _ := hook.CreateSidecar(hook.SidecarTypeAtop, oldPod.Namespace)
 		workerContainer := newPod.Spec.Containers[0]
 		workerContainer.VolumeMounts = append(workerContainer.VolumeMounts,
 			hook.CreateVolumeMount(sidecar.EmptyDir.Name, reportPath))
