@@ -42,13 +42,10 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - "./core init"           
+            - "./core init -N {{ .Release.Namespace }} -n {{ .Release.Name }}"           
           volumeMounts:
             - name: certs
-              mountPath: /core/cert
-            - name: config
-              mountPath: /core/config.yaml
-              subPath: config.yaml              
+              mountPath: /core/cert           
       containers:
         - name: "{{ .Release.Name }}"
           image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
@@ -63,12 +60,6 @@ spec:
           volumeMounts:
             - name: certs
               mountPath: /core/cert
-            - name: config
-              mountPath: /core/config.yaml
-              subPath: config.yaml
       volumes:
         - name: certs
           emptyDir: {}
-        - name: config
-          configMap:  
-            name: "{{ .Release.Name }}"
