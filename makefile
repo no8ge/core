@@ -31,5 +31,6 @@ docker:
 chart:
 	helm package deploy/chart 
 	helm push $(CHART_NAME)-*.tgz  oci://registry-1.docker.io/no8ge
+	rm -f $(CHART_NAME)-*.tgz
 
 .PHONY: build clean run fmt test coverage deps docker chart
