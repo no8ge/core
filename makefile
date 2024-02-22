@@ -1,8 +1,8 @@
 GOPATH := $(shell go env GOPATH)
 export GOPATH
 
-APPVERSION := $(shell helm show chart chart | awk '/^appVersion:/ {print $$2}')
-CHART_NAME := $(shell helm show chart chart | awk '/^name:/ {print $$2}')
+APPVERSION := $(shell helm show chart deploy/chart | awk '/^appVersion:/ {print $$2}')
+CHART_NAME := $(shell helm show chart deploy/chart | awk '/^name:/ {print $$2}')
 
 .DEFAULT_GOAL := build
 build: deps
@@ -29,7 +29,7 @@ docker:
 	docker buildx build -f Dockerfile --platform linux/amd64 -t no8ge/$(CHART_NAME):$(APPVERSION) . --push
 
 chart:
-	helm package chart 
+	helm package deploy/chart 
 	helm push $(CHART_NAME)-*.tgz  oci://registry-1.docker.io/no8ge
 
 .PHONY: build clean run fmt test coverage deps docker chart
