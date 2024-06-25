@@ -1,0 +1,47 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ .Release.Name }}"
+  labels:
+    app: "{{ .Release.Name }}"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/v1.0/metrics"
+    prometheus.io/port: "8080"
+spec:
+  selector:
+    app: "{{ .Release.Name }}"
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Release.Name }}"
+  labels:
+    app: "{{ .Release.Name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Release.Name }}"
+    spec:    
+      containers:
+        - name: "{{ .Release.Name }}"
+          image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
+          command:
+            - "sh"
+          args:
+            - "-c"
+            - "./zelda"
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
