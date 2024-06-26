@@ -14,11 +14,11 @@ func Run() {
 	r.GET("/helm/repos", helm.ListHelmRepos)
 	r.DELETE("/helm/repo", helm.DeleteHelmRepo)
 
-	r.POST("/install", helm.InstallHelmChart)
-	r.PUT("/upgrade", helm.UpgradeHelmChart)
-	r.DELETE("/uninstall", helm.UninstallHelmChart)
-	r.POST("/rollback", helm.RollbackHelmChart)
-	r.GET("/releases", helm.ListHelmCharts)
+	r.POST("/helm/install", helm.InstallHelmChart)
+	r.PUT("/helm/upgrade", helm.UpgradeHelmChart)
+	r.DELETE("/helm/uninstall", helm.UninstallHelmChart)
+	r.POST("/helm/rollback", helm.RollbackHelmChart)
+	r.GET("/helm/releases", helm.ListHelmCharts)
 
 	r.POST("/pods", k8s.CreatePod)
 	r.DELETE("/pods/:namespace/:name", k8s.DeletePod)
