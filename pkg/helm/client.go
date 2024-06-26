@@ -15,16 +15,14 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 )
 
-var (
-	settings = cli.New()
-)
-
 type HelmClient struct {
 	Config   *action.Configuration
 	Settings *cli.EnvSettings
 }
 
 func NewHelmClient(namespace string) (*HelmClient, error) {
+	settings := cli.New()
+	settings.SetNamespace(namespace)
 
 	registryClient, err := registry.NewClient(
 		registry.ClientOptDebug(true),
@@ -37,7 +35,7 @@ func NewHelmClient(namespace string) (*HelmClient, error) {
 	}
 
 	config := new(action.Configuration)
-	if err := config.Init(settings.RESTClientGetter(), namespace, "secret", log.Printf); err != nil {
+	if err := config.Init(settings.RESTClientGetter(), settings.Namespace(), "secret", log.Printf); err != nil {
 		return nil, err
 	}
 	config.RegistryClient = registryClient
@@ -96,10 +94,10 @@ func (hc *HelmClient) DeleteRepo(name string) error {
 	return f.WriteFile(repoFile, 0644)
 }
 
-func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, namespace string, values map[string]interface{}) (*release.Release, error) {
+func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName string, values map[string]interface{}) (*release.Release, error) {
 	install := action.NewInstall(hc.Config)
 	install.ReleaseName = releaseName
-	install.Namespace = namespace
+	install.Namespace = hc.Settings.Namespace()
 	install.Version = chartVersion
 
 	chartPathRef := fmt.Sprintf("%s/%s", repo, chartName)
@@ -117,9 +115,9 @@ func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, n
 	return rel, err
 }
 
-func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion, namespace string, values map[string]interface{}) (*release.Release, error) {
+func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion string, values map[string]interface{}) (*release.Release, error) {
 	upgrade := action.NewUpgrade(hc.Config)
-	upgrade.Namespace = namespace
+	upgrade.Namespace = hc.Settings.Namespace()
 	upgrade.Version = chartVersion
 
 	fullName := fmt.Sprintf("%s/%s", repo, chartName)
