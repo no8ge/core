@@ -41,7 +41,7 @@ spec:
             - "sh"
           args:
             - "-c"
-            - "./zelda"
+            - "./core"
           ports:
             - containerPort: 8080
           imagePullPolicy: Always

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: zelda
+name: core
 description: A helm chart or atop
 
 # A chart can be either an 'application' or a 'library' chart.
