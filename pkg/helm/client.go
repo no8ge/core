@@ -4,13 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
+)
+
+var (
+	settings = cli.New()
 )
 
 type HelmClient struct {
@@ -19,16 +25,24 @@ type HelmClient struct {
 }
 
 func NewHelmClient(namespace string) (*HelmClient, error) {
-	settings := cli.New()
-	config := new(action.Configuration)
-	if err := config.Init(settings.RESTClientGetter(), namespace, "configmap", debug); err != nil {
+
+	registryClient, err := registry.NewClient(
+		registry.ClientOptDebug(true),
+		registry.ClientOptEnableCache(true),
+		registry.ClientOptWriter(os.Stdout),
+	)
+
+	if err != nil {
 		return nil, err
 	}
-	return &HelmClient{Config: config, Settings: settings}, nil
-}
 
-func debug(format string, v ...interface{}) {
-	log.Printf(format, v...)
+	config := new(action.Configuration)
+	if err := config.Init(settings.RESTClientGetter(), namespace, "secret", log.Printf); err != nil {
+		return nil, err
+	}
+	config.RegistryClient = registryClient
+
+	return &HelmClient{Config: config, Settings: settings}, nil
 }
 
 func (hc *HelmClient) AddRepo(name, url string) error {
