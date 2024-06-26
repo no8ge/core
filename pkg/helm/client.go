@@ -96,12 +96,13 @@ func (hc *HelmClient) DeleteRepo(name string) error {
 	return f.WriteFile(repoFile, 0644)
 }
 
-func (hc *HelmClient) InstallChart(repoName, chartName, releaseName, namespace string) (*release.Release, error) {
+func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, namespace string) (*release.Release, error) {
 	install := action.NewInstall(hc.Config)
 	install.ReleaseName = releaseName
 	install.Namespace = namespace
+	install.Version = chartVersion
 
-	fullName := fmt.Sprintf("%s/%s", repoName, chartName)
+	fullName := fmt.Sprintf("%s/%s", repo, chartName)
 	chartPath, err := install.LocateChart(fullName, hc.Settings)
 	if err != nil {
 		return nil, err
@@ -113,26 +114,27 @@ func (hc *HelmClient) InstallChart(repoName, chartName, releaseName, namespace s
 	}
 
 	rel, err := install.Run(chart, nil)
-
 	return rel, err
 }
 
-func (hc *HelmClient) UpgradeChart(releaseName, chartName, namespace string) error {
+func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion, namespace string) (*release.Release, error) {
 	upgrade := action.NewUpgrade(hc.Config)
 	upgrade.Namespace = namespace
+	upgrade.Version = chartVersion
 
-	chartPath, err := upgrade.ChartPathOptions.LocateChart(chartName, hc.Settings)
+	fullName := fmt.Sprintf("%s/%s", repo, chartName)
+	chartPath, err := upgrade.ChartPathOptions.LocateChart(fullName, hc.Settings)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	chart, err := loader.Load(chartPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = upgrade.Run(releaseName, chart, nil)
-	return err
+	rel, err := upgrade.Run(releaseName, chart, nil)
+	return rel, err
 }
 
 func (hc *HelmClient) RollbackChart(releaseName string, revision int) error {

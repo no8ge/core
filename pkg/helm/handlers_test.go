@@ -67,10 +67,40 @@ func TestInstallHelmChart(t *testing.T) {
 	router := setupRouter()
 
 	w := httptest.NewRecorder()
-	body := `{"repo": "myrepo", "chartName": "nginx", "releaseName": "mynginx", "namespace": "kube-system","values":{}}`
-	// body := `{"repo": "oci://registry-1.docker.io/no8ge", "chartName": "aomaker", "releaseName": "test", "namespace": "default","values":{}}`
+	body := `{"repo": "myrepo", "chartName": "nginx", "chartVersion":"18.1.2", "releaseName": "mynginx", "namespace": "kube-system","values":{}}`
+	// body := `{"repo": "oci://registry-1.docker.io/no8ge", "chartName": "core", "chartVersion":"1.0.0","releaseName": "core", "namespace": "default","values":{}}`
 
 	req, _ := http.NewRequest("POST", "/helm/install", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestUpgradeHelmChart(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	body := `{"repo": "myrepo", "chartName": "nginx", "chartVersion":"18.1.1", "releaseName": "mynginx", "namespace": "kube-system","values":{}}`
+	// body := `{"repo": "oci://registry-1.docker.io/no8ge", "chartName": "core", "chartVersion":"1.0.0","releaseName": "core", "namespace": "default","values":{}}`
+
+	req, _ := http.NewRequest("PUT", "/helm/upgrade", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestRollbackHelmChart(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	body := `{"releaseName": "mynginx", "revision":1, "namespace": "kube-system"}`
+	// body := `{"releaseName": "core","revision":"1", "namespace": "default"}`
+
+	req, _ := http.NewRequest("POST", "/helm/rollback", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	router.ServeHTTP(w, req)

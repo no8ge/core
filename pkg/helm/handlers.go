@@ -71,11 +71,12 @@ func DeleteHelmRepo(c *gin.Context) {
 
 func InstallHelmChart(c *gin.Context) {
 	var req struct {
-		Repo        string                 `json:"repo"`
-		ChartName   string                 `json:"chartName"`
-		ReleaseName string                 `json:"releaseName"`
-		Namespace   string                 `json:"namespace"`
-		Values      map[string]interface{} `json:"values"`
+		Repo         string                 `json:"repo"`
+		ChartName    string                 `json:"chartName"`
+		ChartVersion string                 `json:"chartVersion"`
+		ReleaseName  string                 `json:"releaseName"`
+		Namespace    string                 `json:"namespace"`
+		Values       map[string]interface{} `json:"values"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,13 +90,13 @@ func InstallHelmChart(c *gin.Context) {
 		return
 	}
 
-	rel, err := helmClient.InstallChart(req.Repo, req.ChartName, req.ReleaseName, req.Namespace)
+	releases, err := helmClient.InstallChart(req.Repo, req.ChartName, req.ChartVersion, req.ReleaseName, req.Namespace)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "chart installed", "release": rel})
+	c.JSON(http.StatusOK, gin.H{"releases": releases})
 }
 func ListHelmCharts(c *gin.Context) {
 	var req struct {
@@ -123,9 +124,12 @@ func ListHelmCharts(c *gin.Context) {
 
 func UpgradeHelmChart(c *gin.Context) {
 	var req struct {
-		ReleaseName string `json:"releaseName"`
-		ChartName   string `json:"chartName"`
-		Namespace   string `json:"namespace"`
+		Repo         string                 `json:"repo"`
+		ReleaseName  string                 `json:"releaseName"`
+		ChartName    string                 `json:"chartName"`
+		ChartVersion string                 `json:"chartVersion"`
+		Namespace    string                 `json:"namespace"`
+		Values       map[string]interface{} `json:"values"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -138,13 +142,14 @@ func UpgradeHelmChart(c *gin.Context) {
 		return
 	}
 
-	err = helmClient.UpgradeChart(req.ReleaseName, req.ChartName, req.Namespace)
+	releases, err := helmClient.UpgradeChart(req.Repo, req.ReleaseName, req.ChartName, req.ChartVersion, req.Namespace)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "chart upgraded"})
+	c.JSON(http.StatusOK, gin.H{"releases": releases})
+
 }
 
 func RollbackHelmChart(c *gin.Context) {
