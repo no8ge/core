@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/no8ge/zelda/pkg/helm"
-	"github.com/no8ge/zelda/pkg/k8s"
+	"github.com/no8ge/core/pkg/helm"
+	"github.com/no8ge/core/pkg/k8s"
 
 	"github.com/gin-gonic/gin"
 )

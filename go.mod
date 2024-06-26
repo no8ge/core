@@ -1,4 +1,4 @@
-module github.com/no8ge/zelda
+module github.com/no8ge/core
 
 go 1.22.3
 

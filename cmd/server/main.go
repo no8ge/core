@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/no8ge/zelda/internal/server"
+	"github.com/no8ge/core/internal/server"
 )
 
 func main() {

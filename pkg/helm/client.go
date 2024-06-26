@@ -21,7 +21,7 @@ type HelmClient struct {
 func NewHelmClient(namespace string) (*HelmClient, error) {
 	settings := cli.New()
 	config := new(action.Configuration)
-	if err := config.Init(settings.RESTClientGetter(), namespace, "secret", debug); err != nil {
+	if err := config.Init(settings.RESTClientGetter(), namespace, "configmap", debug); err != nil {
 		return nil, err
 	}
 	return &HelmClient{Config: config, Settings: settings}, nil
