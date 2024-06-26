@@ -5,10 +5,6 @@ metadata:
   name: "{{ .Release.Name }}"
   labels:
     app: "{{ .Release.Name }}"
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/path: "/v1.0/metrics"
-    prometheus.io/port: "8080"
 spec:
   selector:
     app: "{{ .Release.Name }}"
