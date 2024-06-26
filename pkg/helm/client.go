@@ -96,14 +96,14 @@ func (hc *HelmClient) DeleteRepo(name string) error {
 	return f.WriteFile(repoFile, 0644)
 }
 
-func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, namespace string) (*release.Release, error) {
+func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, namespace string, values map[string]interface{}) (*release.Release, error) {
 	install := action.NewInstall(hc.Config)
 	install.ReleaseName = releaseName
 	install.Namespace = namespace
 	install.Version = chartVersion
 
-	fullName := fmt.Sprintf("%s/%s", repo, chartName)
-	chartPath, err := install.LocateChart(fullName, hc.Settings)
+	chartPathRef := fmt.Sprintf("%s/%s", repo, chartName)
+	chartPath, err := install.ChartPathOptions.LocateChart(chartPathRef, hc.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +113,11 @@ func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName, n
 		return nil, err
 	}
 
-	rel, err := install.Run(chart, nil)
+	rel, err := install.Run(chart, values)
 	return rel, err
 }
 
-func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion, namespace string) (*release.Release, error) {
+func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion, namespace string, values map[string]interface{}) (*release.Release, error) {
 	upgrade := action.NewUpgrade(hc.Config)
 	upgrade.Namespace = namespace
 	upgrade.Version = chartVersion
@@ -133,7 +133,7 @@ func (hc *HelmClient) UpgradeChart(repo, releaseName, chartName, chartVersion, n
 		return nil, err
 	}
 
-	rel, err := upgrade.Run(releaseName, chart, nil)
+	rel, err := upgrade.Run(releaseName, chart, values)
 	return rel, err
 }
 

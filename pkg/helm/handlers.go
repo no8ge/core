@@ -90,7 +90,7 @@ func InstallHelmChart(c *gin.Context) {
 		return
 	}
 
-	releases, err := helmClient.InstallChart(req.Repo, req.ChartName, req.ChartVersion, req.ReleaseName, req.Namespace)
+	releases, err := helmClient.InstallChart(req.Repo, req.ChartName, req.ChartVersion, req.ReleaseName, req.Namespace, req.Values)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -142,7 +142,7 @@ func UpgradeHelmChart(c *gin.Context) {
 		return
 	}
 
-	releases, err := helmClient.UpgradeChart(req.Repo, req.ReleaseName, req.ChartName, req.ChartVersion, req.Namespace)
+	releases, err := helmClient.UpgradeChart(req.Repo, req.ReleaseName, req.ChartName, req.ChartVersion, req.Namespace, req.Values)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
