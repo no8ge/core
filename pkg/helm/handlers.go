@@ -71,7 +71,7 @@ func DeleteHelmRepo(c *gin.Context) {
 
 func InstallHelmChart(c *gin.Context) {
 	var req struct {
-		RepoName    string                 `json:"repoName"`
+		Repo        string                 `json:"repo"`
 		ChartName   string                 `json:"chartName"`
 		ReleaseName string                 `json:"releaseName"`
 		Namespace   string                 `json:"namespace"`
@@ -89,7 +89,7 @@ func InstallHelmChart(c *gin.Context) {
 		return
 	}
 
-	rel, err := helmClient.InstallChart(req.RepoName, req.ChartName, req.ReleaseName, req.Namespace)
+	rel, err := helmClient.InstallChart(req.Repo, req.ChartName, req.ReleaseName, req.Namespace)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

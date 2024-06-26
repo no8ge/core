@@ -67,8 +67,8 @@ func TestInstallHelmChart(t *testing.T) {
 	router := setupRouter()
 
 	w := httptest.NewRecorder()
-	body := `{"repoName": "myrepo", "chartName": "nginx", "releaseName": "mynginx", "namespace": "kube-system","values":{}}`
-	// body := `{"repoName": "oci://registry-1.docker.io/no8ge", "chartName": "aomaker", "releaseName": "test", "namespace": "default","values":{}}`
+	body := `{"repo": "myrepo", "chartName": "nginx", "releaseName": "mynginx", "namespace": "kube-system","values":{}}`
+	// body := `{"repo": "oci://registry-1.docker.io/no8ge", "chartName": "aomaker", "releaseName": "test", "namespace": "default","values":{}}`
 
 	req, _ := http.NewRequest("POST", "/helm/install", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
