@@ -19,7 +19,7 @@ func setupRouter() *gin.Engine {
 
 	router.POST("/helm/install", InstallHelmChart)
 	router.PUT("/helm/upgrade", UpgradeHelmChart)
-	router.DELETE("/helm/uninstall", UninstallHelmChart)
+	router.POST("/helm/uninstall", UninstallHelmChart)
 	router.POST("/helm/rollback", RollbackHelmChart)
 	router.GET("/helm/releases", ListHelmCharts)
 
@@ -125,7 +125,7 @@ func TestUninstallHelmChart(t *testing.T) {
 	router := setupRouter()
 
 	body := `{"releaseName": "mynginx","namespace": "kube-system"}`
-	req, _ := http.NewRequest("DELETE", "/helm/uninstall", strings.NewReader(body))
+	req, _ := http.NewRequest("POST", "/helm/uninstall", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
