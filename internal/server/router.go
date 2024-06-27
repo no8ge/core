@@ -20,10 +20,11 @@ func Run() {
 	r.POST("/helm/rollback", helm.RollbackHelmChart)
 	r.GET("/helm/releases", helm.ListHelmCharts)
 
-	r.POST("/pods", k8s.CreatePod)
-	r.DELETE("/pods/:namespace/:name", k8s.DeletePod)
-	r.GET("/pods/:namespace", k8s.ListPods)
-	r.GET("/pods/:namespace/:pod/exec", k8s.ExecPod)
+	r.POST("/namespaces/:namespace/pods", k8s.CreatePod)
+	r.GET("/namespaces/:namespace/pods/:name", k8s.GetPod)
+	r.DELETE("/namespaces/:namespace/pods/:name", k8s.DeletePod)
+	r.GET("/namespaces/:namespace/pods", k8s.ListPods)
+	r.POST("/namespaces/:namespace/pods/:name/exec", k8s.ExecPod)
 
 	r.Run(":8080")
 }

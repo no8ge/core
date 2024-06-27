@@ -27,19 +27,17 @@ func CreatePod(c *gin.Context) {
 
 	c.JSON(http.StatusOK, pod)
 }
-
-func DeletePod(c *gin.Context) {
+func GetPod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	podsClient := Clientset.CoreV1().Pods(namespace)
-	err := podsClient.Delete(context.TODO(), name, metav1.DeleteOptions{})
+	pod, err := Clientset.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+	c.JSON(http.StatusOK, pod)
 }
 
 func ListPods(c *gin.Context) {
@@ -57,7 +55,7 @@ func ListPods(c *gin.Context) {
 
 func ExecPod(c *gin.Context) {
 	namespace := c.Param("namespace")
-	podName := c.Param("pod")
+	podName := c.Param("name")
 	containerName := c.Query("container")
 	command := c.QueryArray("command")
 
@@ -101,4 +99,17 @@ func ExecPod(c *gin.Context) {
 		"stdout": stdout.String(),
 		"stderr": stderr.String(),
 	})
+}
+func DeletePod(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	podsClient := Clientset.CoreV1().Pods(namespace)
+	err := podsClient.Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
