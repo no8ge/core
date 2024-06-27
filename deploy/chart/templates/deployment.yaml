@@ -2,12 +2,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: "{{ .Release.Name }}"
+  name: "{{ .Chart.Name }}"
   labels:
-    app: "{{ .Release.Name }}"
+    app: "{{ .Chart.Name }}"
 spec:
   selector:
-    app: "{{ .Release.Name }}"
+    app: "{{ .Chart.Name }}"
   ports:
     - protocol: TCP
       port: 8080
@@ -17,21 +17,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ .Release.Name }}"
+  name: "{{ .Chart.Name }}"
   labels:
-    app: "{{ .Release.Name }}"
+    app: "{{ .Chart.Name }}"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: "{{ .Release.Name }}"
+      app: "{{ .Chart.Name }}"
   template:
     metadata:
       labels:
-        app: "{{ .Release.Name }}"
+        app: "{{ .Chart.Name }}"
     spec:    
       containers:
-        - name: "{{ .Release.Name }}"
+        - name: "{{ .Chart.Name }}"
           image: "{{ .Values.registry }}/{{ .Values.repository }}/{{ .Values.image }}:{{ .Chart.AppVersion}}"
           command:
             - "sh"
