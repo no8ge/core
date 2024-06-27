@@ -16,7 +16,7 @@ func Run() {
 
 	r.POST("/helm/install", helm.InstallHelmChart)
 	r.PUT("/helm/upgrade", helm.UpgradeHelmChart)
-	r.POST("/helm/uninstall", helm.UninstallHelmChart)
+	r.DELETE("/helm/uninstall", helm.UninstallHelmChart)
 	r.POST("/helm/rollback", helm.RollbackHelmChart)
 	r.GET("/helm/releases", helm.ListHelmCharts)
 
