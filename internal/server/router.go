@@ -19,6 +19,7 @@ func Run() {
 	r.DELETE("/helm/uninstall", helm.UninstallHelmChart)
 	r.POST("/helm/rollback", helm.RollbackHelmChart)
 	r.GET("/helm/releases", helm.ListHelmCharts)
+	r.GET("/helm/release", helm.GetHelmChart)
 
 	r.POST("/namespaces/:namespace/pods", k8s.CreatePod)
 	r.GET("/namespaces/:namespace/pods/:name", k8s.GetPod)

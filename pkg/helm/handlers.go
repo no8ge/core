@@ -98,6 +98,32 @@ func InstallHelmChart(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"releases": releases})
 }
+
+func GetHelmChart(c *gin.Context) {
+	var req struct {
+		Namespace   string `json:"namespace"`
+		ReleaseName string `json:"releaseName"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	helmClient, err := NewHelmClient(req.Namespace)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	releases, err := helmClient.GetRelease(req.ReleaseName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"releases": releases})
+}
+
 func ListHelmCharts(c *gin.Context) {
 	var req struct {
 		Namespace string `json:"namespace"`

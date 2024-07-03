@@ -22,6 +22,7 @@ func setupRouter() *gin.Engine {
 	router.DELETE("/helm/uninstall", UninstallHelmChart)
 	router.POST("/helm/rollback", RollbackHelmChart)
 	router.GET("/helm/releases", ListHelmCharts)
+	router.GET("/helm/release", GetHelmChart)
 
 	return router
 }
@@ -115,6 +116,19 @@ func TestListlHelmChart(t *testing.T) {
 	w := httptest.NewRecorder()
 	body := `{"namespace": "kube-system"}`
 	req, _ := http.NewRequest("GET", "/helm/releases", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGettHelmChart(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	body := `{"releaseName": "mynginx","namespace": "kube-system"}`
+	req, _ := http.NewRequest("GET", "/helm/release", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	router.ServeHTTP(w, req)

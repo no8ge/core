@@ -97,6 +97,17 @@ func (hc *HelmClient) DeleteRepo(name string) error {
 	return f.WriteFile(repoFile, 0644)
 }
 
+func (hc *HelmClient) GetRelease(releaseName string) (*release.Release, error) {
+
+	get := action.NewGet(hc.Config)
+
+	rel, err := get.Run(releaseName)
+	if err != nil {
+		return nil, err
+	}
+	return rel, err
+}
+
 func (hc *HelmClient) InstallChart(repo, chartName, chartVersion, releaseName string, values map[string]interface{}) (*release.Release, error) {
 	install := action.NewInstall(hc.Config)
 	install.ReleaseName = releaseName
