@@ -28,6 +28,9 @@ func NewHelmClient(namespace string) (*HelmClient, error) {
 		registry.ClientOptDebug(true),
 		registry.ClientOptEnableCache(true),
 		registry.ClientOptWriter(os.Stdout),
+
+		// enable http oci
+		registry.ClientOptPlainHTTP(),
 	)
 
 	if err != nil {
