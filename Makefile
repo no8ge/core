@@ -26,10 +26,11 @@ coverage:
 deps:
 	go mod tidy
 
-docker:
+buildx:
 	docker buildx build -f Dockerfile --platform linux/amd64 -t no8ge/$(CHART_NAME):$(APPVERSION) . --push
+	docker buildx build -f Dockerfile --platform linux/amd64 -t dockerhub.qingcloud.com/qingtest/$(CHART_NAME):$(APPVERSION) . --push
 
-chart:
+package:
 	helm package deploy/chart 
 	helm push $(CHART_NAME)-*.tgz  oci://registry-1.docker.io/no8ge
 	rm -f $(CHART_NAME)-*.tgz
