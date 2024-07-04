@@ -66,6 +66,16 @@ func TestListPodsByLabel(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+func TestListPodsByField(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/namespaces/atop-agent-system/pods?&fieldSelector=status.phase=Running", nil)
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
 func TestExecPod(t *testing.T) {
 	router := setupRouter()

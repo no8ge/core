@@ -43,10 +43,12 @@ func GetPod(c *gin.Context) {
 func ListPods(c *gin.Context) {
 	namespace := c.Param("namespace")
 	labelSelector := c.Query("labelSelector")
+	fieldSelector := c.Query("fieldSelector")
 
 	podsClient := Clientset.CoreV1().Pods(namespace)
 	pods, err := podsClient.List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labelSelector,
+		FieldSelector: fieldSelector,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
