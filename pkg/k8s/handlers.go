@@ -62,7 +62,8 @@ func ExecPod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	podName := c.Param("name")
 	containerName := c.Query("container")
-	command := c.QueryArray("command")
+	cmd := c.Query("command")
+	command := []string{"sh", "-c", cmd}
 
 	req := Clientset.CoreV1().RESTClient().
 		Post().
